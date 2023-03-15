@@ -32,6 +32,5 @@ app.use(express.json());
 // router 
 app.use("/api",productRouter)
 
-mongoose.connect("mongodb")
-
+mongoose.connect("mongodb://localhost:27017/we17307");
 export const viteNodeApp = app;

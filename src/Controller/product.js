@@ -1,5 +1,5 @@
 import axios from "axios";
-
+import product from "../models/product";
 export const getAll = async (req, res) => {
     try {
         // gửi request từ server nodes -> json-server
