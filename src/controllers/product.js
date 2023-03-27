@@ -1,94 +1,82 @@
-import axios from "axios";
-import Product from "../models/product";
-export const getAll = async (req, res) => {
-    try {
-        // gửi request từ server nodes -> json-server
-        const products = Product.find();
-        // Nếu mảng không có sản phẩm nào thì trả về 404
-        if (products.length === 0) {
-            res.status(404).json({
-                message: "Không có sản phẩm nào",
-            });
-        }
-        // Nếu có sản phẩm thì trả về 200 và mảng sản phẩm
-        return res.status(200).json(products);
-    } catch (error) {
-        // Nếu có lỗi thì trả về 500 và lỗi
-        return res.status(500).json({
-            message: error,
-        });
-    }
-   
-};
-export const get = async (req, res) => {
-    try {
-        const { data: product } = await axios.get(
-            `http://localhost:3001/products/${req.params.id}`
-        );
-        if (!product) {
-            return res.status(404).json({
-                message: "Không tìm thấy sản phẩm",
-            });
-        }
-        return res.status(200).json({
-            message: "Product found",
-            data: product,
-        });
-    } catch (error) {
-        return res.status(500).json({
-            message: "Lỗi server",
-        });
-    }
-};
-export const create = async (req, res) => {
-    try {
-        const product = await product.create(req.body);
-        if (!product) {
-            return res.status(400).json({
-                message: "Không thể tạo sản phẩm",
-            });
-        }
-        return res.status(201).json({
-            message: "Product created",
-            data: product,
-        });
-    } catch (error) {
-        return res.status(500).json({
-            message: error,
-        });
-    }
-};
-export const remove = async (req, res) => {
-    try {
-        await axios.delete(`http://localhost:3001/products/${req.params.id}`);
-        return res.status(200).json({
-            message: "Sản phẩm đã được xóa thành công",
-        });
-    } catch (error) {
-        return res.status(500).json({
-            message: error,
-        });
-    }
-};
+import Products from "../models/product";
+import joi from "joi";
 
-export const update = async (req, res) => {
+const productSchema = joi.object({
+    name: joi.string().required(),
+    price: joi.number().required()
+})
+
+export const createProduct = async (req, res) => {
     try {
-        const { data: product } = await axios.patch(
-            `http://localhost:3001/products/${req.params.id}`,
-            req.body
-        );
-        if (!product) {
-            return res.status(404).json({
-                message: "Không tìm thấy sản phẩm",
-            });
-        }
+        const {error} = productSchema.validate(req.body)
+            if(error){
+                return res.status(400).json({
+                    message: error.details[0].message
+                })
+            }
+        const products = await Products.create(req.body)
         return res.status(200).json({
-            message: "Sản phẩm đã được cập nhật thành công",
-            data: product,
-        });
+            message: "Tạo thành công",
+            data: products
+        })
     } catch (error) {
         return res.status(500).json({
-            message: error,
-        });
+            message: error
+        })
     }
-};
+}
+
+export const getAll = async (req,res) =>{
+    try {
+        const products = await Products.find();
+        return res.status(200).json(products)
+    } catch (error) {
+        return res.status(500).json({
+            message: error
+        })
+    }
+}
+export const getById = async (req,res) =>{
+    try {
+        const products = await Products.findById({_id:req.params.id});
+        return res.status(200).json(products)
+    } catch (error) {
+        return res.status(500).json({
+            message: error
+        })
+    }
+}
+
+export const updateProduct = async (req,res)=>{
+    try {
+        const {error} = productSchema.validate(req.body)
+        if(error){
+            return res.status(400).json({
+                message: error.details[0].message
+            })
+        }
+        const products = await Products.findByIdAndUpdate({_id:req.params.id}, req.body,{new:true});
+        return res.status(200).json({
+            message: "Cập nhật thành công",
+            data: products
+        })
+    } catch (error) {
+        return res.status(500).json({
+            message: error
+        })
+    }
+}
+
+export const removeProduct = async (req, res) => {
+    try {
+        const products = await Products.findByIdAndRemove({_id:req.params.id})
+        return res.status(200).json({
+            message: "Đã xóa thành công",
+            data: products
+        })
+    } catch (error) {
+        return res.status(500).json({
+            message: error
+        })
+    }
+}
